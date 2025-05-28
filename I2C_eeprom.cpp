@@ -117,6 +117,23 @@ uint8_t I2C_eeprom::readByte(const uint32_t memoryAddress)
 }
 
 //  returns bytes read.
+uint16_t I2C_eeprom::readBlock(const uint32_t memoryAddress, uint8_t * buffer, const uint16_t length)
+{
+  uint16_t address = memoryAddress;
+  uint16_t len = length;
+  uint16_t bytes = 0;
+  while (len > 0)
+  {
+    uint8_t count = I2C_BUFFERSIZE;
+    if (count > len) count = len;
+    bytes   += _ReadBlock(address, buffer, count);
+    address += count;
+    buffer  += count;
+    len     -= count;
+  }
+  return bytes;
+}
+/*
 uint16_t I2C_eeprom::readBlock(const uint32_t memoryAddress, uint8_t *buffer, const uint16_t length)
 {
   uint32_t address = memoryAddress;
@@ -153,6 +170,8 @@ uint16_t I2C_eeprom::readBlock(const uint32_t memoryAddress, uint8_t *buffer, co
   }
   return bytes;
 }
+
+*/
 
 //  returns true or false.
 bool I2C_eeprom::verifyBlock(const uint32_t memoryAddress, const uint8_t *buffer, const uint16_t length)
