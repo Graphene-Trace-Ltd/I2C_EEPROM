@@ -13,6 +13,7 @@
 
 #define I2C_EEPROM_VERSION          (F("1.9.2"))
 
+#define I2C_DEVICESIZE_24LC1025     131072
 #define I2C_DEVICESIZE_24LC512      65536
 #define I2C_DEVICESIZE_24LC256      32768
 #define I2C_DEVICESIZE_24LC128      16384
@@ -46,7 +47,7 @@
 #define UNIT_TEST_FRIEND
 #endif
 
-//#define ENABLE_DEBUG
+#define ENABLE_DEBUG
 
 #ifdef ENABLE_DEBUG
 #define SPRN Serial.print
@@ -87,54 +88,54 @@ public:
 
   //  writes a byte to memoryAddress
   //  returns I2C status, 0 = OK
-  int      writeByte(const uint16_t memoryAddress, const uint8_t value);
+  int      writeByte(const uint32_t memoryAddress, const uint8_t value);
   //  writes length bytes from buffer to EEPROM
   //  returns I2C status, 0 = OK
-  int      writeBlock(const uint16_t memoryAddress, const uint8_t * buffer, const uint16_t length);
+  int      writeBlock(const uint32_t memoryAddress, const uint8_t * buffer, const uint16_t length);
   //  set length bytes in the EEPROM to the same value.
   //  returns I2C status, 0 = OK
-  int      setBlock(const uint16_t memoryAddress, const uint8_t value, const uint16_t length);
+  int      setBlock(const uint32_t memoryAddress, const uint8_t value, const uint16_t length);
 
 
   //  returns the value stored in memoryAddress
-  uint8_t  readByte(const uint16_t memoryAddress);
+  uint8_t  readByte(const uint32_t memoryAddress);
   //  reads length bytes into buffer
   //  returns bytes read.
-  uint16_t readBlock(const uint16_t memoryAddress, uint8_t * buffer, const uint16_t length);
-  bool     verifyBlock(const uint16_t memoryAddress, const uint8_t * buffer, const uint16_t length);
+  uint16_t readBlock(const uint32_t memoryAddress, uint8_t * buffer, const uint16_t length);
+  bool     verifyBlock(const uint32_t memoryAddress, const uint8_t * buffer, const uint16_t length);
 
   //  updates a byte at memoryAddress, writes only if there is a new value.
   //  return 0 if data is same or written OK, error code otherwise.
-  int      updateByte(const uint16_t memoryAddress, const uint8_t value);
+  int      updateByte(const uint32_t memoryAddress, const uint8_t value);
   //  updates a block in memory, writes only if there is a new value.
   //  only to be used when you expect to write same buffer multiple times.
   //  test your performance gains!
   //  returns bytes actually written <= length
-  uint16_t updateBlock(const uint16_t memoryAddress, const uint8_t * buffer, const uint16_t length);
+  uint16_t updateBlock(const uint32_t memoryAddress, const uint8_t * buffer, const uint16_t length);
 
 
   //  same functions as above but with verify
   //  return false if write or verify failed.
-  bool     writeByteVerify(const uint16_t memoryAddress, const uint8_t value);
-  bool     writeBlockVerify(const uint16_t memoryAddress, const uint8_t * buffer, const uint16_t length);
-  bool     setBlockVerify(const uint16_t memoryAddress, const uint8_t value, const uint16_t length);
-  bool     updateByteVerify(const uint16_t memoryAddress, const uint8_t value);
-  bool     updateBlockVerify(const uint16_t memoryAddress, const uint8_t * buffer, const uint16_t length);
+  bool     writeByteVerify(const uint32_t memoryAddress, const uint8_t value);
+  bool     writeBlockVerify(const uint32_t memoryAddress, const uint8_t * buffer, const uint16_t length);
+  bool     setBlockVerify(const uint32_t memoryAddress, const uint8_t value, const uint16_t length);
+  bool     updateByteVerify(const uint32_t memoryAddress, const uint8_t value);
+  bool     updateBlockVerify(const uint32_t memoryAddress, const uint8_t * buffer, const uint16_t length);
 
 
   //  Meta data functions
   uint32_t determineSize(const bool debug = false);
   uint32_t determineSizeNoWrite();
   uint32_t getDeviceSize();
-  uint8_t  getPageSize();
-  uint8_t  getPageSize(uint32_t deviceSize);
+  uint16_t  getPageSize();
+  uint16_t  getPageSize(uint32_t deviceSize);
   uint32_t getLastWrite();
 
 
   //  for overruling and debugging.
   //  forces a power of 2
   uint32_t setDeviceSize(uint32_t deviceSize);  //  returns set size
-  uint8_t  setPageSize(uint8_t pageSize);       //  returns set size
+  uint8_t  setPageSize(uint16_t pageSize);       //  returns set size
 
 
   //  TWR = WriteCycleTime
@@ -157,7 +158,7 @@ private:
   uint8_t  _deviceAddress;
   uint32_t _lastWrite  = 0;  //  for waitEEReady
   uint32_t _deviceSize = 0;
-  uint8_t  _pageSize   = 0;
+  uint16_t  _pageSize   = 0;
   uint8_t  _extraTWR   = 0;  //  milliseconds
 
 
@@ -165,17 +166,17 @@ private:
   //  24LC01..24LC16  use one-byte addresses + part of device address
   bool     _isAddressSizeTwoWords;
 
-  void     _beginTransmission(const uint16_t memoryAddress);
+  void     _beginTransmission(const uint32_t memoryAddress);
 
   //  returns I2C status, 0 = OK
   //  TODO incrBuffer is an implementation name, not a functional name.
-  int      _pageBlock(const uint16_t memoryAddress, const uint8_t * buffer, const uint16_t length, const bool incrBuffer);
+  int      _pageBlock(const uint32_t memoryAddress, const uint8_t * buffer, const uint16_t length, const bool incrBuffer);
   //  returns I2C status, 0 = OK
-  int      _WriteBlock(const uint16_t memoryAddress, const uint8_t * buffer, const uint16_t length);
+  int      _WriteBlock(const uint32_t memoryAddress, const uint8_t * buffer, const uint16_t length);
   //  returns bytes read.
-  uint8_t  _ReadBlock(const uint16_t memoryAddress, uint8_t * buffer, const uint16_t length);
+  uint8_t  _ReadBlock(const uint32_t memoryAddress, uint8_t * buffer, const uint16_t length);
   //  compare bytes in EEPROM.
-  bool     _verifyBlock(const uint16_t memoryAddress, const uint8_t * buffer, const uint16_t length);
+  bool     _verifyBlock(const uint32_t memoryAddress, const uint8_t * buffer, const uint16_t length);
 
   //  to optimize the write latency of the EEPROM
   void     _waitEEReady();
