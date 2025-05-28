@@ -127,6 +127,15 @@ uint16_t I2C_eeprom::readBlock(const uint32_t memoryAddress, uint8_t *buffer, co
     uint8_t count = I2C_BUFFERSIZE;
     if (count > len)
       count = len;
+
+    // Prevent crossing 64kB bank boundary for large EEPROMs
+    if (_deviceSize > 65536)
+    {
+      uint16_t bytesUntilBankBoundary = 0x10000 - (address & 0xFFFF);
+      if (count > bytesUntilBankBoundary)
+        count = bytesUntilBankBoundary;
+    }
+
     bytes += _ReadBlock(address, buffer, count);
     address += count;
     buffer += count;
@@ -570,6 +579,44 @@ int I2C_eeprom::_pageBlock(const uint32_t memoryAddress, const uint8_t *buffer, 
   }
   return 0;
 }
+
+/* _pageBlock proposed by Copilot to deal with memories above 64kB of storage
+
+int I2C_eeprom::_pageBlock(const uint32_t memoryAddress, const uint8_t *buffer, const uint16_t length, const bool incrBuffer)
+{
+    uint32_t address = memoryAddress;
+    uint32_t len = length;
+    while (len > 0)
+    {
+        // Calculate bytes until next page boundary
+        uint16_t bytesUntilPageBoundary = this->_pageSize - (address % this->_pageSize);
+
+        // Calculate bytes until next 64kB bank boundary (for devices > 64kB)
+        uint16_t bytesUntilBankBoundary = 0x10000 - (address & 0xFFFF);
+
+        // Determine chunk size for this operation
+        uint16_t count = I2C_BUFFERSIZE;
+        if (count > len)
+            count = len;
+        if (count > bytesUntilPageBoundary)
+            count = bytesUntilPageBoundary;
+        if (_deviceSize > 65536 && count > bytesUntilBankBoundary)
+            count = bytesUntilBankBoundary;
+
+        int rv = _WriteBlock(address, buffer, count);
+        if (rv != 0)
+            return rv;
+
+        address += count;
+        if (incrBuffer)
+            buffer += count;
+        len -= count;
+    }
+    return 0;
+}
+
+
+*/
 
 //  supports one, two, and CAT24M01 17-bit addresses
 void I2C_eeprom::_beginTransmission(const uint32_t memoryAddress)
