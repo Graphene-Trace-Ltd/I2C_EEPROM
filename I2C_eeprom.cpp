@@ -8,7 +8,7 @@
 #include "I2C_eeprom.h"
 
 //  Not used directly
-#define I2C_PAGESIZE_24LC1025 256
+#define I2C_PAGESIZE_24LC1024 256
 #define I2C_PAGESIZE_24LC512 128
 #define I2C_PAGESIZE_24LC256 64
 #define I2C_PAGESIZE_24LC128 64
