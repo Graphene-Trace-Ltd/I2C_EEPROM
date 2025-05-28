@@ -128,7 +128,6 @@ uint16_t I2C_eeprom::readBlock(const uint32_t memoryAddress, uint8_t *buffer, co
     if (count > len)
       count = len;
 
-    // Prevent crossing 64kB bank boundary for large EEPROMs
     if (_deviceSize > 65536)
     {
       uint16_t bytesUntilBankBoundary = 0x10000 - (address & 0xFFFF);
@@ -136,7 +135,18 @@ uint16_t I2C_eeprom::readBlock(const uint32_t memoryAddress, uint8_t *buffer, co
         count = bytesUntilBankBoundary;
     }
 
-    bytes += _ReadBlock(address, buffer, count);
+    // SAFETY CHECK
+    if (count == 0)
+    {
+      break;
+    }
+
+    uint8_t read = _ReadBlock(address, buffer, count);
+    if (read == 0)
+    {
+      break;
+    }
+    bytes += read;
     address += count;
     buffer += count;
     len -= count;
@@ -313,9 +323,11 @@ uint32_t I2C_eeprom::determineSize(const bool debug)
     // Test folding
     uint8_t count = 0;
     writeByte(size, pat55);
-    if (readByte(0) == pat55) count++;
+    if (readByte(0) == pat55)
+      count++;
     writeByte(size, patAA);
-    if (readByte(0) == patAA) count++;
+    if (readByte(0) == patAA)
+      count++;
     folded = (count == 2);
 
     if (debug)
@@ -629,7 +641,7 @@ void I2C_eeprom::_beginTransmission(const uint32_t memoryAddress)
       // a16 is bit 1 of the I2C address (see CAT24M01 datasheet)
       uint8_t deviceAddr = _deviceAddress | ((memoryAddress & 0x10000) >> 15);
 
-      //Serial.printf("Computed device address [CAT24M01]: 0x%02X\n", deviceAddr);
+      // Serial.printf("Computed device address [CAT24M01]: 0x%02X\n", deviceAddr);
 
       _wire->beginTransmission(deviceAddr);
     }
@@ -646,11 +658,10 @@ void I2C_eeprom::_beginTransmission(const uint32_t memoryAddress)
     _wire->beginTransmission(address);
   }
 
-  //Serial.printf("Computed device address [Generic]: 0x%02X\n", _deviceAddress);
+  // Serial.printf("Computed device address [Generic]: 0x%02X\n", _deviceAddress);
 
   // Address Low Byte
   _wire->write((memoryAddress & 0xFF));
-
 }
 
 //  pre: length <= this->_pageSize  && length <= I2C_BUFFERSIZE;
@@ -734,7 +745,6 @@ uint8_t I2C_eeprom::_ReadBlock(const uint32_t memoryAddress, uint8_t *buffer, co
 
   return readBytes;
 }
-
 
 //  compares content of EEPROM with buffer.
 //  returns true if equal.
